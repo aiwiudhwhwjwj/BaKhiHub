@@ -1,0 +1,283 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Bá Khí Hub",
+   LoadingTitle = "Script Đa Năng",
+   LoadingSubtitle = "làm bởi Kim Long",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "BaKhiHub",
+      FileName = "BaKhiHub"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = false,
+   KeySettings = {
+      Title = "Key | Youtube Hub",
+      Subtitle = "Key System",
+      Note = "Key In Discord Server",
+      FileName = "YoutubeHubKey1",
+      SaveKey = false,
+      GrabKeyFromSite = true,
+      Key = {"https://pastebin.com/raw/AtgzSPWK"}
+   }
+})
+
+local MainTab = Window:CreateTab("Chung", nil)
+local MainSection = MainTab:CreateSection("Main")
+
+Rayfield:Notify({
+   Title = "You executed the script",
+   Content = "Very cool gui",
+   Duration = 5,
+   Image = 13047715178,
+   Actions = {
+      Ignore = {
+         Name = "Okay!",
+         Callback = function()
+            print("The user tapped Okay!")
+         end
+      },
+   },
+})
+
+local Button = MainTab:CreateButton({
+   Name = "Infinite Jump Toggle",
+   Callback = function()
+      _G.infinjump = not _G.infinjump
+
+      if _G.infinJumpStarted == nil then
+         _G.infinJumpStarted = true
+         game.StarterGui:SetCore("SendNotification", {Title="Youtube Hub"; Text="Infinite Jump Activated!"; Duration=5;})
+
+         local plr = game:GetService('Players').LocalPlayer
+         local m = plr:GetMouse()
+         m.KeyDown:connect(function(k)
+            if _G.infinjump then
+               if k:byte() == 32 then
+                  local humanoid = game:GetService'Players'.LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+                  if humanoid then
+                     humanoid:ChangeState('Jumping')
+                     task.wait()
+                     humanoid:ChangeState('Seated')
+                  end
+               end
+            end
+         end)
+      end
+   end,
+})
+
+local Slider1 = MainTab:CreateSlider({
+   Name = "WalkSpeed Slider",
+   Range = {1, 350},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "sliderws",
+   Callback = function(Value)
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+      end
+   end,
+})
+
+local Slider2 = MainTab:CreateSlider({
+   Name = "JumpPower Slider",
+   Range = {1, 350},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Flag = "sliderjp",
+   Callback = function(Value)
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+      end
+   end,
+})
+
+-- ============================================
+-- PHẦN SÁNG TOÀN CẢNH (FULL BRIGHT)
+-- ============================================
+local FullBrightButton = MainTab:CreateButton({
+   Name = "Bật Full sáng",
+   Callback = function()
+      local Light = game:GetService("Lighting")
+
+      local function dofullbright()
+         Light.Ambient = Color3.new(1, 1, 1)
+         Light.ColorShift_Bottom = Color3.new(1, 1, 1)
+         Light.ColorShift_Top = Color3.new(1, 1, 1)
+      end
+
+      dofullbright()
+
+      if not _G.FullBrightConnection then
+         _G.FullBrightConnection = Light.LightingChanged:Connect(dofullbright)
+      end
+
+      Rayfield:Notify({
+         Title = "Full Sáng;",
+         Content = "Đã bật",
+         Duration = 3,
+         Image = 4483362458,
+      })
+   end,
+})
+
+-- ============================================
+-- PHẦN UI BAY (FLY GUI)
+-- ============================================
+local FlyGuiButton = MainTab:CreateButton({
+   Name = "UI Bay",
+   Callback = function()
+      loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-fly-Gui-v5-64340"))()
+      
+      Rayfield:Notify({
+         Title = "UI Bay",
+         Content = "Đã kích hoạt Fly GUI!",
+         Duration = 3,
+         Image = 4483362458,
+      })
+   end,
+})
+-- ============================================
+
+local Input = MainTab:CreateInput({
+   Name = "Walkspeed",
+   PlaceholderText = "1-500",
+   RemoveTextAfterFocusLost = true,
+   Callback = function(Text)
+      if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+         game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = tonumber(Text) or 16
+      end
+   end,
+})
+
+-- ============================================
+-- TAB BUILD A BOAT (AUTO FARM UPDATE)
+-- ============================================
+local BABTab = Window:CreateTab("⛵ Build A Boat", nil)
+
+_G.AutoFarm = false
+_G.TweenSpeed = 100
+
+BABTab:CreateSlider({
+   Name = "Tween Speed",
+   Range = {10, 750},
+   Increment = 10,
+   Suffix = "Studs/s",
+   CurrentValue = 100,
+   Flag = "tweenspeed_bab",
+   Callback = function(Value)
+      _G.TweenSpeed = Value
+   end,
+})
+
+local function tweenAndHover(targetCFrame)
+   local TweenService = game:GetService("TweenService")
+   local Players = game:GetService("Players")
+   local player = Players.LocalPlayer
+   local character = player.Character
+   if not character then return end
+   local hrp = character:FindFirstChild("HumanoidRootPart")
+   local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+   if not hrp or not humanoid or humanoid.Health <= 0 or not _G.AutoFarm then return end
+
+   local tweenSpeed = _G.TweenSpeed or 100
+   local distance = (hrp.Position - targetCFrame.Position).Magnitude
+   local duration = distance / tweenSpeed
+   local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+
+   local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+   tween:Play()
+   
+   -- Chờ Tween hoàn thành
+   local elapsed = 0
+   while elapsed < duration and _G.AutoFarm and humanoid.Health > 0 do
+      task.wait(0.1)
+      elapsed = elapsed + 0.1
+   end
+
+   -- Đợi 1.5 giây lơ lửng tại điểm đến
+   local waitElapsed = 0
+   while waitElapsed < 1.5 and _G.AutoFarm and humanoid.Health > 0 do
+      task.wait(0.1)
+      waitElapsed = waitElapsed + 0.1
+   end
+end
+
+local Toggle = BABTab:CreateToggle({
+   Name = "Auto Farm",
+   CurrentValue = false,
+   Flag = "AutoFarmBAB",
+   Callback = function(Value)
+      _G.AutoFarm = Value
+      
+      local Players = game:GetService("Players")
+      local player = Players.LocalPlayer
+
+      if _G.AutoFarm then
+         task.spawn(function()
+            while _G.AutoFarm do
+               local character = player.Character or player.CharacterAdded:Wait()
+               local hrp = character:WaitForChild("HumanoidRootPart", 10)
+               local humanoid = character:WaitForChild("Humanoid", 10)
+               
+               if hrp and humanoid and humanoid.Health > 0 then
+                  -- Khóa trọng lực để lơ lửng không bị rơi
+                  local bv = Instance.new("BodyVelocity")
+                  bv.Name = "FarmHoverVelocity"
+                  bv.Velocity = Vector3.new(0, 0, 0)
+                  bv.MaxForce = Vector3.new(0, math.huge, 0)
+                  bv.Parent = hrp
+
+                  local targetX = -50
+                  local defaultY = 65
+
+                  -- Danh sách mốc Z
+                  local zList = {1005, 1725, 2550, 3330, 4050, 4850, 5625, 6350, 7215, 8000, 8684, 9490}
+
+                  for i, zVal in ipairs(zList) do
+                     if not _G.AutoFarm or humanoid.Health <= 0 then break end
+                     
+                     -- Mốc cuối cùng: hạ Y xuống -360
+                     local currentY = (i == #zList) and -360 or defaultY
+                     
+                     tweenAndHover(CFrame.new(targetX, currentY, zVal))
+                  end
+
+                  -- Khi đã đi hết các mốc -> Xóa BodyVelocity để nhân vật rơi xuống/chết
+                  if bv and bv.Parent then 
+                     bv:Destroy() 
+                  end
+
+                  -- Chờ cho tới khi nhân vật chết hoặc respawn hoàn toàn trước khi bắt đầu lượt mới
+                  if humanoid and humanoid.Health > 0 then
+                     humanoid.Health = 0
+                  end
+                  
+                  player.CharacterAdded:Wait()
+                  task.wait(1)
+               end
+            end
+         end)
+      else
+         local character = player.Character
+         if character and character:FindFirstChild("HumanoidRootPart") then
+            local bv = character.HumanoidRootPart:FindFirstChild("FarmHoverVelocity")
+            if bv then bv:Destroy() end
+         end
+      end
+   end,
+})
+
+local CreditsTab = Window:CreateTab("Credits", nil)
+
+CreditsTab:CreateSection("Credits")
+CreditsTab:CreateLabel("Làm bởi Kim Long")
+CreditsTab:CreateLabel("Version: 1.0.0")
