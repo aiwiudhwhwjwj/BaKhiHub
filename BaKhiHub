@@ -30,9 +30,9 @@ local MainTab = Window:CreateTab("Chung", nil)
 local MainSection = MainTab:CreateSection("Main")
 
 Rayfield:Notify({
-   Title = "You executed the script",
-   Content = "Very cool gui",
-   Duration = 5,
+   Title = "bạn đã chạy script này",
+   Content = "đang chạy...",
+   Duration = 3,
    Image = 13047715178,
    Actions = {
       Ignore = {
@@ -100,31 +100,61 @@ local Slider2 = MainTab:CreateSlider({
 })
 
 -- ============================================
--- PHẦN SÁNG TOÀN CẢNH (FULL BRIGHT)
+-- PHẦN BẬT / TẮT FULL SÁNG (FULL BRIGHT TOGGLE)
 -- ============================================
-local FullBrightButton = MainTab:CreateButton({
-   Name = "Bật Full sáng",
-   Callback = function()
-      local Light = game:GetService("Lighting")
+local Lighting = game:GetService("Lighting")
+local defaultAmbient = Lighting.Ambient
+local defaultColorShiftBottom = Lighting.ColorShift_Bottom
+local defaultColorShiftTop = Lighting.ColorShift_Top
 
-      local function dofullbright()
-         Light.Ambient = Color3.new(1, 1, 1)
-         Light.ColorShift_Bottom = Color3.new(1, 1, 1)
-         Light.ColorShift_Top = Color3.new(1, 1, 1)
+local FullBrightToggle = MainTab:CreateToggle({
+   Name = "Full Sáng",
+   CurrentValue = false,
+   Flag = "FullBrightToggle",
+   Callback = function(Value)
+      _G.FullBright = Value
+
+      if _G.FullBright then
+         defaultAmbient = Lighting.Ambient
+         defaultColorShiftBottom = Lighting.ColorShift_Bottom
+         defaultColorShiftTop = Lighting.ColorShift_Top
+
+         local function setBright()
+            if _G.FullBright then
+               Lighting.Ambient = Color3.new(1, 1, 1)
+               Lighting.ColorShift_Bottom = Color3.new(1, 1, 1)
+               Lighting.ColorShift_Top = Color3.new(1, 1, 1)
+            end
+         end
+
+         setBright()
+
+         if not _G.FullBrightConnection then
+            _G.FullBrightConnection = Lighting.LightingChanged:Connect(function()
+               if _G.FullBright then
+                  setBright()
+               end
+            end)
+         end
+
+         Rayfield:Notify({
+            Title = "Full Sáng",
+            Content = "Đã bật sáng!",
+            Duration = 3,
+            Image = 4483362458,
+         })
+      else
+         Lighting.Ambient = defaultAmbient
+         Lighting.ColorShift_Bottom = defaultColorShiftBottom
+         Lighting.ColorShift_Top = defaultColorShiftTop
+
+         Rayfield:Notify({
+            Title = "Full Sáng",
+            Content = "Đã tắt",
+            Duration = 3,
+            Image = 4483362458,
+         })
       end
-
-      dofullbright()
-
-      if not _G.FullBrightConnection then
-         _G.FullBrightConnection = Light.LightingChanged:Connect(dofullbright)
-      end
-
-      Rayfield:Notify({
-         Title = "Full Sáng;",
-         Content = "Đã bật",
-         Duration = 3,
-         Image = 4483362458,
-      })
    end,
 })
 
@@ -138,13 +168,29 @@ local FlyGuiButton = MainTab:CreateButton({
       
       Rayfield:Notify({
          Title = "UI Bay",
-         Content = "Đã kích hoạt Fly GUI!",
+         Content = "Đã bật Fly GUI!",
          Duration = 3,
          Image = 4483362458,
       })
    end,
 })
+
 -- ============================================
+-- PHẦN SỬA THỜI GIAN GIỮ NÚT
+-- ============================================
+local PromptButton = MainTab:CreateButton({
+   Name = "Sửa thời gian giữ nút",
+   Callback = function()
+      loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Change-Proximity-Promt-duration-43307"))()
+      
+      Rayfield:Notify({
+         Title = "Proximity Prompt",
+         Content = "Đã kích hoạt thành công!",
+         Duration = 3,
+         Image = 4483362458,
+      })
+   end,
+})
 
 local Input = MainTab:CreateInput({
    Name = "Walkspeed",
@@ -164,6 +210,7 @@ local BABTab = Window:CreateTab("⛵ Build A Boat", nil)
 
 _G.AutoFarm = false
 _G.TweenSpeed = 100
+_G.CurrentTween = nil
 
 BABTab:CreateSlider({
    Name = "Tween Speed",
@@ -182,37 +229,46 @@ local function tweenAndHover(targetCFrame)
    local Players = game:GetService("Players")
    local player = Players.LocalPlayer
    local character = player.Character
-   if not character then return end
+   if not character then return false end
    local hrp = character:FindFirstChild("HumanoidRootPart")
    local humanoid = character:FindFirstChildOfClass("Humanoid")
 
-   if not hrp or not humanoid or humanoid.Health <= 0 or not _G.AutoFarm then return end
+   if not hrp or not humanoid or humanoid.Health <= 0 or not _G.AutoFarm then return false end
 
    local tweenSpeed = _G.TweenSpeed or 100
    local distance = (hrp.Position - targetCFrame.Position).Magnitude
    local duration = distance / tweenSpeed
    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
 
-   local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
-   tween:Play()
+   _G.CurrentTween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+   _G.CurrentTween:Play()
    
-   -- Chờ Tween hoàn thành
    local elapsed = 0
    while elapsed < duration and _G.AutoFarm and humanoid.Health > 0 do
       task.wait(0.1)
       elapsed = elapsed + 0.1
    end
 
-   -- Đợi 1.5 giây lơ lửng tại điểm đến
+   if not _G.AutoFarm or humanoid.Health <= 0 then
+      if _G.CurrentTween then _G.CurrentTween:Cancel() end
+      return false
+   end
+
    local waitElapsed = 0
    while waitElapsed < 1.5 and _G.AutoFarm and humanoid.Health > 0 do
       task.wait(0.1)
       waitElapsed = waitElapsed + 0.1
    end
+
+   if not _G.AutoFarm or humanoid.Health <= 0 then
+      return false
+   end
+
+   return true
 end
 
 local Toggle = BABTab:CreateToggle({
-   Name = "Auto Farm",
+   Name = "Farm tự động",
    CurrentValue = false,
    Flag = "AutoFarmBAB",
    Callback = function(Value)
@@ -229,7 +285,6 @@ local Toggle = BABTab:CreateToggle({
                local humanoid = character:WaitForChild("Humanoid", 10)
                
                if hrp and humanoid and humanoid.Health > 0 then
-                  -- Khóa trọng lực để lơ lửng không bị rơi
                   local bv = Instance.new("BodyVelocity")
                   bv.Name = "FarmHoverVelocity"
                   bv.Velocity = Vector3.new(0, 0, 0)
@@ -239,34 +294,34 @@ local Toggle = BABTab:CreateToggle({
                   local targetX = -50
                   local defaultY = 65
 
-                  -- Danh sách mốc Z
                   local zList = {1005, 1725, 2550, 3330, 4050, 4850, 5625, 6350, 7215, 8000, 8684, 9490}
 
                   for i, zVal in ipairs(zList) do
                      if not _G.AutoFarm or humanoid.Health <= 0 then break end
                      
-                     -- Mốc cuối cùng: hạ Y xuống -360
                      local currentY = (i == #zList) and -360 or defaultY
                      
-                     tweenAndHover(CFrame.new(targetX, currentY, zVal))
+                     local success = tweenAndHover(CFrame.new(targetX, currentY, zVal))
+                     if not success then break end
                   end
 
-                  -- Khi đã đi hết các mốc -> Xóa BodyVelocity để nhân vật rơi xuống/chết
                   if bv and bv.Parent then 
                      bv:Destroy() 
                   end
 
-                  -- Chờ cho tới khi nhân vật chết hoặc respawn hoàn toàn trước khi bắt đầu lượt mới
-                  if humanoid and humanoid.Health > 0 then
-                     humanoid.Health = 0
+                  if _G.AutoFarm then
+                     player.CharacterAdded:Wait()
+                     task.wait(1)
                   end
-                  
-                  player.CharacterAdded:Wait()
-                  task.wait(1)
                end
             end
          end)
       else
+         if _G.CurrentTween then
+            _G.CurrentTween:Cancel()
+            _G.CurrentTween = nil
+         end
+
          local character = player.Character
          if character and character:FindFirstChild("HumanoidRootPart") then
             local bv = character.HumanoidRootPart:FindFirstChild("FarmHoverVelocity")
